@@ -51,7 +51,7 @@ class AntColonySystem
 		void resetAnt();		//蚂蚁死后重置
 		void moveNext();	//控制蚂蚁移动到下一个位置，包括触发蚁群局部信息的更新
 		int checkAdj();		//检查邻接顶点是否有非禁忌的食物顶点, 若有食物顶点，返回>=0; 若无，返回-1
-		void updateFoodBag(VIndex);	//走到新的食物顶点时更新食物顶点
+		void updateFoodBag(VIndex);	//走到新的食物顶点时更新食物包裹,若装满了，则将终点移出禁忌表
 		int chooseWay();		//在周围非禁忌的邻接顶点找合适的顶点，有一定的失误率 。若找到了合适的邻接顶点 ,返回 >=0，若蚂蚁死亡 ,返回 < 0
 		void terminate();		//蚂蚁移动结束
 		
@@ -103,7 +103,8 @@ public:
 	size_t		_steps_num;					//步数
 	VIndex		_src;						//起点顶点号
 	VIndex		_dest;						//终点顶点号
-	vector<VIndex> _best_path;				//最优的路径
+	vector<VIndex>		_best_path;			//最优的路径
+	Weight				_best_weight;		//最优路径对应的权重
 	double		_mrate;						//蚂蚁犯错概率
 
 
@@ -112,12 +113,18 @@ public:
 		:_frate(frate), _hrate(hrate), _mrate(mis_rate)
 		, _ants_num(ants_num), _steps_num(steps_num)
 		,_ants(_ants_num, *this)       //初始化所有蚂蚁
-	{ loadInfo(f1, f2); }
+	{
+		loadInfo(f1, f2);
+		_best_weight = INT_MAX;
+	}
 	
 	double calInfo(Ant&, AdjIndex);			//根据蚂蚁信息，计算该蚂蚁到邻接顶点的信息量总和
 	void localUpdate(Ant&, AdjIndex);		//根据蚂蚁选择的顶点，更新该边的信息量
 	void activeFood(Ant&, FIndex);			//找到食物的蚂蚁，激活所经过路径上的食物增量
-	void init();							//初始化各项增量
+	//void init();							//初始化各项增量
+	void updataPath(vector<VIndex> &);		//计算给定路径上的权重和
+	void run();								//中控函数
+	void infoDiss();						//信息衰减
 
 };
 
