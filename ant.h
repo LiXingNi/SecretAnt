@@ -11,6 +11,8 @@
 #include <random>
 #include <set>
 
+using std::endl;
+using std::cout;
 using std::set;
 using std::vector;
 using std::unordered_map;
@@ -40,12 +42,27 @@ class AntColonySystem
 
 	struct Ant
 	{
+		struct AntRandNum{
+			AntRandNum(){
+				_rand_num = u(e);
+			}
+			AntRandNum(const AntRandNum& arn){
+				_rand_num = u(e);
+			}
+			operator int(){
+				return _rand_num;
+			}
+			int _rand_num;
+		};
 		unordered_set < VIndex >	_forbiden_table;	//禁忌表  ，初始时含有终点
-		unordered_set < VIndex >	_food_bag;			//当前已经获取的食物编号
+		set < VIndex >	_food_bag;			//当前已经获取的食物编号
 		vector	<VIndex>			_path;				//当前蚂蚁经过的路径
 		VIndex						_loc;				//蚂蚁当前所在位置
 		AntColonySystem&			_ant_system;		//蚁群控制中心
-		int							_rand_fac;			//蚂蚁的随机因子
+		AntRandNum					_rand_fac;			//蚂蚁的随机因子
+		static default_random_engine e;
+		static uniform_int_distribution<int> u; 
+		static uniform_int_distribution<int> u_mistake; 
 
 	public:
 		void resetAnt();		//蚂蚁死后重置
@@ -61,9 +78,6 @@ class AntColonySystem
 		Ant(AntColonySystem & s) :_ant_system(s)
 		{
 			//静态随机数引擎
-			static default_random_engine e;
-			static uniform_int_distribution<int> u(0, 7); 
-			_rand_fac = u(e);
 			resetAnt();
 		}
 	};
@@ -74,8 +88,13 @@ public:
 	{
 		Info	_info;			//信息量
 		AInfo	_ainfo;			//信息增量
-
+		static const Info _max_info;
 		EInfo(AInfo ainfo = 0, Info info = 0.0) :_ainfo(ainfo), _info(info){}
+		void addInfo()
+		{
+			Info n_info = _info + _ainfo;
+			_info = n_info > _max_info ? _max_info : n_info;
+		}
 	};
 
 	struct AdjEdg
@@ -112,9 +131,9 @@ public:
 	AntColonySystem(const string& f1, const string & f2, double frate, double hrate, double mis_rate, size_t ants_num, size_t steps_num)  //输入顺序：食物信息量消散率，家信息量消散率，蚂蚁犯错概率，蚂蚁数量，最大步数
 		:_frate(frate), _hrate(hrate), _mrate(mis_rate)
 		, _ants_num(ants_num), _steps_num(steps_num)
-		,_ants(_ants_num, *this)       //初始化所有蚂蚁
 	{
 		loadInfo(f1, f2);
+		_ants.resize(_ants_num, *this);
 		_best_weight = INT_MAX;
 	}
 	
