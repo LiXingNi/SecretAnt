@@ -43,6 +43,12 @@ int AntColonySystem::Ant::checkAdj()
 		if (_ant_system._food.find(iter->first) != _ant_system._food.end() &&
 			!isForbidden(iter->first)) 
 			return iter->first;
+		// 是终点且不是禁忌顶点。则将该点加入路径中
+		else if (iter->first == _ant_system._dest && !isForbidden(iter->first))
+		{
+			_path.push_back(iter->first); //将终点放入路径中，并返回结束码：-2
+			return -2;
+		}
 	}
 	return -1;
 }
@@ -96,15 +102,34 @@ int AntColonySystem::Ant::chooseWay()
 		return max_vertex[_rand_fac % s_vec];
 }
 
+void AntColonySystem::Ant::updateFoodBag(VIndex index)
+{
+	_food_bag.insert(index);
+	if (_food_bag.size() == _ant_system._food.size())  //检查包裹是否装满
+	{
+		auto iter = _forbiden_table.find(_ant_system._dest);
+		_forbiden_table.erase(iter);
+	}
+}
+
+void AntColonySystem::Ant::terminate()
+{
+	_ant_system.updataPath(_path);
+}
+
 void AntColonySystem::Ant::moveNext()
 {
 	VIndex index;  //选中的顶点
 	if ((index = checkAdj()) >= 0) //找到食物顶点
 	{
-		_ant_system.activeFood(*this, index); //激活当前蚂蚁路径上的食物信息增量
-		//_ant_system.localUpdate(*this, index); //找到了食物顶点，在将食物加入背包前要先更新食物信息量。
-		//先更新信息量后再更新背包中的食物数量。上一句话必须位于下一句话前方
+		_ant_system.activeFood(*this, index); //激活当前蚂蚁路径上的食物信息增量。激活的同时更新食物信息量
 		updateFoodBag(index);		//更新食物背包，若食物背包装满，则将终点移出禁忌表
+	}
+	else if (index == -2) //邻接点中有终点且食物收集结束
+	{
+		terminate(); //终止
+		resetAnt();
+		return;
 	}
 	else if ((index = chooseWay()) < 0) //找不到合适的非禁忌顶点
 	{
@@ -118,3 +143,39 @@ void AntColonySystem::Ant::moveNext()
 	_forbiden_table.insert(index);
 	_loc = index;	//更新节点位置
 }
+
+
+void AntColonySystem::updataPath(vector<VIndex> & path)
+{
+	Weight c_weight = 0;
+	for (int i = 1; i != path.size(); ++i)
+	{
+		VIndex prev = path[i - 1];
+		VIndex curr = path[i];
+		c_weight += _graph[prev][curr]._adj_e_weight;
+	}
+	if (c_weight < _best_weight)
+	{
+		_best_weight = c_weight;
+		_best_path = path;
+	}
+}
+
+void AntColonySystem::localUpdate(Ant & ant, AdjIndex index)  //根据蚂蚁所选择的新顶点，路径信息
+{
+	AdjEdg & adj_edg = _graph[ant._loc][index]; 
+
+	//更新home权重
+	adj_edg._adj_e_home._info += adj_edg._adj_e_home._ainfo; 
+	
+	//根据蚂蚁是否拥有某种食物，更新食物信息量
+	unordered_map<FIndex, EInfo> & adj_ftable = adj_edg._adj_e_ftable;
+	for (unordered_map<FIndex, EInfo>::iterator it = adj_ftable.begin(); it != adj_ftable.end(); ++it)
+	{
+		if (ant._food_bag.find(it->first) == ant._food_bag.end())  //该蚂蚁没有收集到该食物
+		{
+			it->second._info += it->second._ainfo;  //增加该食物的信息量
+		}
+	}
+}
+
