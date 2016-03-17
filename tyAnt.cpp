@@ -11,7 +11,7 @@ void AntColonySystem::loadInfo
 
 	VIndex	src_id, dst_id, key_id;		
 	EIndex	edge_id;
-	int		cost;
+	Weight  cost;
 	char	rubbish;				//用来读取并抛弃逗号和|等分隔符
 	//edge_id:边索引，src_id:出发顶点索引，dst_id:到达顶点索引，cost:权重，key_id:关键节点
 
@@ -49,17 +49,19 @@ double AntColonySystem::calInfo(Ant& ant, AdjIndex adj_index)
 		return adj_edge._adj_e_home._info;
 
 	Info food_info(0);														//初始化食物信息素
-
+	
 	for (auto& food : adj_edge._adj_e_ftable)
 	{
 		if (ant._food_bag.find(food.first) == ant._food_bag.end())	//如果背包中不含有当前边的食物信息素x，则累加该信息素
 			food_info += food.second._info;
 	}
 
+	food_info += (_food.size() - adj_edge._adj_e_ftable.size()) * _record_info;
+
 	return food_info;														//返回食物信息素  
 }
 
-void AntColonySystem::activeFood(Ant& ant, FIndex food_index)
+/*void AntColonySystem::activeFood(Ant& ant, FIndex food_index)
 {
 	vector<VIndex>& ant_path = ant._path;										//取出当前蚂蚁经过的路径
 	Weight sum_weight = 0;														//叠加的权重和
@@ -75,21 +77,29 @@ void AntColonySystem::activeFood(Ant& ant, FIndex food_index)
 		edg_info.addInfo();										//自加一次对应食物的信息素
 		dst = src;																//将目的节点设为当前节点并进入下一轮循环
 	}
-}
+}*/
 
+//每四次循环选择局部最佳，一次选择全局最佳
+//局部最佳 ： true
+//全局最佳 ： false
 void AntColonySystem::run()
 {
+	int count = 0;
 	for (int i(0); i != _steps_num; ++i)
 	{
-		std::cout << i << std::endl;
-		for (auto& ant : _ants){
-			ant.moveNext();
-		}
-		infoDiss();					
+		if (i % 200 == 0)
+			cout << i << endl;
+		for (auto & ant : _ants)
+			ant.antRun();
+		bool flag = count++ % 5 == 0 ? false : true;
+
+		Ant & best_ant = chooseBestAnt(flag);
+		updateInfo(best_ant);
 	}
 }
 
-void AntColonySystem::infoDiss(){
+
+/*void AntColonySystem::infoDiss(){
 	for (auto& src : _graph)										//取出图中的一个起始节点和他的相关数据
 	{
 		for (auto& edge : src.second)								//取出该起始节点的一条出边
@@ -100,4 +110,74 @@ void AntColonySystem::infoDiss(){
 				food_info.second._info *= _frate;					//遍历该边所有的食物信息素并消散
 		}
 	}
+}
+
+void AntColonySystem::activeClear(Ant& ant){
+	for (int i = 1; i < ant._path.size(); ++i)
+	{
+		VIndex curr = ant._path[i];
+		VIndex prev = ant._path[i - 1];
+		AdjEdg& edge = _graph[prev][curr];
+		if (ant._food_bag.size() == _food.size())
+			edge._adj_e_home._info = 0;
+		for (auto & food : ant._food_bag)
+		{
+			edge._adj_e_ftable[food]._info = 0;
+			edge._adj_e_ftable[food]._ainfo = 0;
+		}
+	}
+}*/
+
+//* method:
+//* false->选取全局最优蚂蚁
+//* true->选取迭代最优蚂蚁 
+AntColonySystem::Ant& AntColonySystem::chooseBestAnt(bool method) {
+	auto ant_iter = std::max_element(_ants.begin(), _ants.end(), [this](const Ant& x, const Ant& y){return !this->cmpAnts(x, y); });//需要想清楚,先调试这里
+	updateBestAnt(*ant_iter);
+	switch (method){
+	case false: return *_best_ant;
+	case true: return *ant_iter;
+	default: throw std::runtime_error("error method in chooseBestAnt function");
+	}
+}
+
+void AntColonySystem::updateInfo(Ant& ant){
+	EInfo::updateMinMax(ant, _frate);///question
+	_record_info *= _frate;
+	_record_info < EInfo::Qmin ? _record_info = EInfo::Qmin : 1;
+	_record_info > EInfo::Qmax ? _record_info = EInfo::Qmax : 1;
+
+	for (auto & src : _graph) {
+		for (auto &edge : src.second){
+			edge.second._adj_e_home.diss(_hrate);
+			for (auto &food_info : edge.second._adj_e_ftable)
+			{
+				food_info.second.diss(_frate);
+			}
+		}
+	}
+
+	vector<int> food_vec;
+	bool update_home(false);
+	if (ant._survive)
+		update_home = true;
+	auto path = ant._path;
+	double add_value = 1.0 / ant._path_weight;
+	for (int i = path.size() - 1; i > 0; --i)
+	{
+		if (update_home)
+			_graph[path[i - 1]][path[i]]._adj_e_home.diss(_frate);
+		if (isFood(path[i]))
+			food_vec.push_back(path[i]);
+		for (auto food_index : food_vec)
+		{
+			_graph[path[i - 1]][path[i]]._adj_e_ftable[food_index].addInfo(add_value, _record_info);
+		}
+	}
+
+}
+
+void AntColonySystem::EInfo::updateMinMax(Ant& best_ant, double rate){
+	Qmax = 1.0 / (best_ant._path_weight *(1 - rate));
+	Qmin = Qmax * ratio;
 }
