@@ -1,5 +1,16 @@
 #include <iostream>
 #include <ctime>
+<<<<<<< HEAD
+#include "t1.h"
+
+const double AntColonySystem::_init_info = 10000;	//初始信息量
+default_random_engine AntColonySystem::Ant::e(std::time(0));
+uniform_int_distribution<int> AntColonySystem::Ant::u(0, 7); 
+uniform_real_distribution<double> AntColonySystem::Ant::u_mistake; 
+AntColonySystem::Info AntColonySystem::EInfo::Qmax, AntColonySystem::EInfo::Qmin;
+double AntColonySystem::EInfo::ratio;
+
+=======
 #include "ant.h"
 
 const double AntColonySystem::_init_info = 10000;	//初始信息量
@@ -9,6 +20,7 @@ uniform_real_distribution<double> AntColonySystem::Ant::u_mistake;
 AntColonySystem::Info AntColonySystem::EInfo::Qmax, AntColonySystem::EInfo::Qmin;
 double AntColonySystem::EInfo::ratio;
 
+>>>>>>> refs/remotes/LiXingNi/master
 double getPbest()
 {
 	static double pBest = 0.005;
@@ -155,6 +167,7 @@ void AntColonySystem::Ant::updateFoodBag(VIndex index)
 
 
 void AntColonySystem::Ant::dealCommonVIndex(VIndex index)
+<<<<<<< HEAD
 {
 	//加入路径
 	_path.push_back(index);
@@ -172,6 +185,25 @@ void AntColonySystem::Ant::dealFoodVIndex(VIndex index)
 	updateFoodBag(index);
 }
 
+=======
+{
+	//加入路径
+	_path.push_back(index);
+	//加入禁忌表
+	_forbiden_table.insert(index);
+	//更新当前位置
+	_loc = index;
+}
+
+void AntColonySystem::Ant::dealFoodVIndex(VIndex index)
+{
+	//与处理普通顶点一样
+	dealCommonVIndex(index);
+	//加入食物包裹
+	updateFoodBag(index);
+}
+
+>>>>>>> refs/remotes/LiXingNi/master
 
 int AntColonySystem::Ant::moveNext()  //正常移动，返回顶点值，返回-2 即为到达终点，返回 -1即为死亡
 {
