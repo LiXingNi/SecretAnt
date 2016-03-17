@@ -62,19 +62,42 @@ public:
 			int _rand_num;
 		};
 		unordered_set < VIndex >	_forbiden_table;	//禁忌表  ，初始时含有终点
+<<<<<<< HEAD
 		set < VIndex >				_food_bag;			//当前已经获取的食物编号
+=======
+<<<<<<< HEAD
+		set < VIndex >				_food_bag;			//当前已经获取的食物编号
+=======
+		set < VIndex >	_food_bag;			//当前已经获取的食物编号
+>>>>>>> origin/master
+>>>>>>> refs/remotes/LiXingNi/master
 		vector	<VIndex>			_path;				//当前蚂蚁经过的路径
 		VIndex						_loc;				//蚂蚁当前所在位置
 		AntColonySystem&			_ant_system;		//蚁群控制中心
 		AntRandNum					_rand_fac;			//蚂蚁的随机因子
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> refs/remotes/LiXingNi/master
 
 		Weight						_path_weight;		//当前蚂蚁权重
 		bool						_survive;			//成功到达终点的蚂蚁为true
 
 
+<<<<<<< HEAD
 		static default_random_engine e;
 		static uniform_int_distribution<int> u; 
 		static uniform_real_distribution<double> u_mistake; 
+=======
+		static default_random_engine e;
+		static uniform_int_distribution<int> u; 
+		static uniform_real_distribution<double> u_mistake; 
+=======
+		static default_random_engine e;
+		static uniform_int_distribution<int> u; 
+		static uniform_int_distribution<int> u_mistake; 
+>>>>>>> origin/master
+>>>>>>> refs/remotes/LiXingNi/master
 
 	public:
 		void resetAnt();		//蚂蚁死后重置
@@ -105,6 +128,10 @@ public:
 	struct EInfo
 	{
 		Info	_info;			//信息量
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> refs/remotes/LiXingNi/master
 		static Info Qmax, Qmin;
 		static double ratio;//undefined
 
@@ -125,6 +152,18 @@ public:
 			_info *= rate;
 			rate < Qmin ? rate = Qmin : 1;
 			rate > Qmax ? rate = Qmax : 1;
+<<<<<<< HEAD
+=======
+=======
+		AInfo	_ainfo;			//信息增量
+		static const Info _max_info;
+		EInfo(AInfo ainfo = 0, Info info = 0.0) :_ainfo(ainfo), _info(info){}
+		void addInfo()
+		{
+			Info n_info = _info + _ainfo;
+			_info = n_info > _max_info ? _max_info : n_info;
+>>>>>>> origin/master
+>>>>>>> refs/remotes/LiXingNi/master
 		}
 	};
 
@@ -167,12 +206,17 @@ public:
 		, _ants_num(ants_num), _steps_num(steps_num)
 	{
 		loadInfo(f1, f2);
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> refs/remotes/LiXingNi/master
 
 		EInfo::Qmax = EInfo::Qmin = 0;
 		double city_num = _graph.size();
 		double temp = std::exp(std::log(getPbest()) / city_num); //对Pbest开N_CITY_COUNT次方
 		EInfo::ratio = (2.0 / temp - 2.0) / (city_num - 2.0);
 
+<<<<<<< HEAD
 		_ants.resize(_ants_num, *this);
 		_record_info = _init_info;			//初始化信息量
 
@@ -180,6 +224,19 @@ public:
 		_best_ant = shared_ptr<Ant>(new Ant(*this)); 
 		_best_ant->_path_weight = INT_MAX;
 		_best_ant->_survive = false;	//先初始化为食物蚂蚁
+=======
+		_ants.resize(_ants_num, *this);
+		_record_info = _init_info;			//初始化信息量
+
+		//初始化最佳蚂蚁
+		_best_ant = shared_ptr<Ant>(new Ant(*this)); 
+		_best_ant->_path_weight = INT_MAX;
+		_best_ant->_survive = false;	//先初始化为食物蚂蚁
+=======
+		_ants.resize(_ants_num, *this);
+		_best_weight = INT_MAX;
+>>>>>>> origin/master
+>>>>>>> refs/remotes/LiXingNi/master
 	}
 	
 	double calInfo(Ant&, AdjIndex);			//根据蚂蚁信息，计算该蚂蚁到邻接顶点的信息量总和
