@@ -1,18 +1,40 @@
 #include <iostream>
+#include <ctime>
+#include "ant.h"
 
-#include "t1.h"
+const double AntColonySystem::_init_info = 10000;	//初始信息量
+default_random_engine AntColonySystem::Ant::e(std::time(0));
+uniform_int_distribution<int> AntColonySystem::Ant::u(0, 7); 
+uniform_real_distribution<double> AntColonySystem::Ant::u_mistake; 
+AntColonySystem::Info AntColonySystem::EInfo::Qmax, AntColonySystem::EInfo::Qmin;
+double AntColonySystem::EInfo::ratio;
 
+double getPbest()
+{
+	static double pBest = 0.005;
+	return pBest;
+}
 
 ////////////////////////////// ANT /////////////////////////////////
 void AntColonySystem::Ant::resetAnt()
 {
-	_loc = _ant_system._src;	//当前位置初始化为起点
-	
-	//置空各个数组
-	_path.resize(0);
-	_food_bag.clear();
+	//初始化禁忌表
 	_forbiden_table.clear();
 	_forbiden_table.insert(_ant_system._dest);  //初始时禁忌表中就有终点
+
+	//初始化食物包裹
+	_food_bag.clear();
+
+	//初始化路径集合，加入起点
+	_path.resize(0);
+	_path.push_back(_ant_system._src);
+
+
+	//初始化一些成员
+	_loc = _ant_system._src;	//当前位置初始化为起点
+	_rand_fac = AntRandNum();
+	_path_weight = 0;
+	_survive = false;			//初始化成功标志位为：否
 }
 
 
@@ -23,83 +45,95 @@ bool AntColonySystem::Ant::isForbidden(VIndex index)
 
 bool AntColonySystem::Ant::isMistake()
 {
-	static default_random_engine e;
-	static uniform_int_distribution<int> u(0, 99);
-	int random_num = static_cast<int>(_ant_system._mrate * 100);
-	if (u(e) < random_num)  //在犯错概率内
+	if (u_mistake(e) < _ant_system._mrate)  //在犯错概率内
 		return true;
 	else
+	{
 		return false;
+	}
 }
 
-
-int AntColonySystem::Ant::checkAdj()
+//检查周围的顶点是否是非禁忌表中的食物顶点或终点
+//若是食物顶点，则返回该食物顶点 >= 0;
+//若是终点，则返回 -2
+//若无特殊点，则返回 -1
+int AntColonySystem::Ant::checkAdj()  
 {
 	//检查周围的点
 	AdjSet & adj_set = _ant_system._graph[_loc];
 	for (auto iter = adj_set.begin(); iter != adj_set.end(); ++iter)
 	{
-		// 是食物顶点，且不是禁忌顶点
-		if (_ant_system._food.find(iter->first) != _ant_system._food.end() &&
-			!isForbidden(iter->first)) 
-			return iter->first;
-		// 是终点且不是禁忌顶点。则将该点加入路径中
-		else if (iter->first == _ant_system._dest && !isForbidden(iter->first))
+		if (!isForbidden(iter->first)) //考虑非禁忌顶点
 		{
-			_path.push_back(iter->first); //将终点放入路径中，并返回结束码：-2
-			return -2;
+			if (_ant_system.isFood(iter->first))  //若是食物顶点，则直接返回该顶点
+				return iter->first;
+			else if (iter->first == _ant_system._dest) //到达终点，则返回-2
+				return -2;
 		}
 	}
-	return -1;
+	return -1; //普通顶点，返回 -1
 }
 
 
 int AntColonySystem::Ant::chooseWay()
 {
 	AdjSet& adj_set = _ant_system._graph[_loc]; //当前顶点的邻接表
-	vector<VIndex> unf_vertex;	//非禁忌邻接顶点
-	vector<VIndex> max_vertex;  //信息量最大的顶点集合
-	Info	max_info = DBL_MIN;			//最大信息量
+	//vector<VIndex> unf_vertex;	//非禁忌邻接顶点
+	VIndex min_vertex;
+	Info	min_info = DBL_MAX;
+	vector<pair<VIndex,Info>> unf_info;  //信息量最大的顶点集合
+	Info total_info = 0;
+
 	for (auto iter = adj_set.begin(); iter != adj_set.end(); ++iter)
 	{
 		if (isForbidden(iter->first))  //当前邻接顶点是禁忌点
 			continue;
-		unf_vertex.push_back(iter->first);  //加入非禁忌顶点集合
-
 		Info curr_info = _ant_system.calInfo(*this, iter->first);
-		if (curr_info > max_info)
+		Weight curr_weight = _ant_system._graph[_loc][iter->first]._adj_e_weight;
+		curr_info /= (curr_weight * curr_weight);
+
+		total_info += curr_info;  //统计所有信息量
+		unf_info.push_back({ iter->first,curr_info });
+
+		if (curr_info < min_info)
 		{
-			max_info = curr_info;
-			max_vertex.resize(0);
-			max_vertex.push_back(iter->first);
+			min_info = curr_info;
+			min_vertex = iter->first;
 		}
-		else if (curr_info == max_info)
-		{
-			max_vertex.push_back(iter->first);
-		}
-		else;
 	}
 
 	//找不到可行节点。蚂蚁死亡
-	if (unf_vertex.size() == 0)  
+	if (unf_info.size() == 0)
+	{
+		//_ant_system.activeClear(*this);
 		return -1;
+	}
 	else if (isMistake())
 	{
-		static default_random_engine e;
-		uniform_int_distribution<int> u(0, unf_vertex.size() - 1);
-		return unf_vertex[u(e)];	//犯错的情况下随机选取
+		return min_vertex;
 	}
-	else if (max_vertex.size() == 1) return max_vertex[0];
-
 	else;
 
-	//若有多个顶点的信息量相同，则根据随机因子选取
-	//若当前可选的顶点数大于随机因子，则直接选取。否则，用随机因子对顶点集合的大小取余
-	int s_vec = max_vertex.size();
-	if (_rand_fac < s_vec)
-		return max_vertex[_rand_fac];
-	else
-		return max_vertex[_rand_fac % s_vec];
+	//******** 这一段等田野改 **********************************
+
+	//根据信息量分配选中概率
+	for (auto & info : unf_info)
+	{
+		if (total_info == 0)
+			info.second = 1.0 / unf_info.size();	//如果每条路信息素均为0，则每条路均摊概率
+		info.second /= total_info;					//计算概率
+	}
+
+	double rand_num = u_mistake(e);					//生成一个double型随机数
+	VIndex i = 0;
+	while (rand_num > 0)							//轮流从rand_num中减去每一个概率值，如果减为负数或0，则选择这条路。
+	{
+		rand_num -= unf_info[i].second;
+		++i;					
+	}
+	return unf_info[i - 1].first;					//因为在循环体内最后调用了++i,故这里返回i-1的索引值。
+	
+	//******** 这一段等田野改 **********************************
 }
 
 void AntColonySystem::Ant::updateFoodBag(VIndex index)
@@ -112,70 +146,123 @@ void AntColonySystem::Ant::updateFoodBag(VIndex index)
 	}
 }
 
-void AntColonySystem::Ant::terminate()
+//void AntColonySystem::Ant::terminate()
+//{
+//	_ant_system.updataPath(_path);
+//	//蚂蚁到家后清空路径信息增益，避免重复走一条路径
+//	//_ant_system.activeClear(*this);
+//}
+
+
+void AntColonySystem::Ant::dealCommonVIndex(VIndex index)
 {
-	_ant_system.updataPath(_path);
+	//加入路径
+	_path.push_back(index);
+	//加入禁忌表
+	_forbiden_table.insert(index);
+	//更新当前位置
+	_loc = index;
 }
 
-void AntColonySystem::Ant::moveNext()
+void AntColonySystem::Ant::dealFoodVIndex(VIndex index)
+{
+	//与处理普通顶点一样
+	dealCommonVIndex(index);
+	//加入食物包裹
+	updateFoodBag(index);
+}
+
+
+int AntColonySystem::Ant::moveNext()  //正常移动，返回顶点值，返回-2 即为到达终点，返回 -1即为死亡
 {
 	VIndex index;  //选中的顶点
-	if ((index = checkAdj()) >= 0) //找到食物顶点
+
+	if ((index = checkAdj()) >= 0 && !isMistake()) //若犯错往下走；否则，如果找到食物顶点
 	{
-		_ant_system.activeFood(*this, index); //激活当前蚂蚁路径上的食物信息增量。激活的同时更新食物信息量
-		updateFoodBag(index);		//更新食物背包，若食物背包装满，则将终点移出禁忌表
+		dealFoodVIndex(index);
 	}
-	else if (index == -2) //邻接点中有终点且食物收集结束
+	else if (index == -2 && !isMistake()) //邻接点中有终点且食物收集结束
 	{
-		terminate(); //终止
-		resetAnt();
-		return;
+		dealCommonVIndex(_ant_system._dest);
+		return -2;  //返回-2 则蚂蚁存活
 	}
 	else if ((index = chooseWay()) < 0) //找不到合适的非禁忌顶点
 	{
-		resetAnt();	//重置蚂蚁
-		return;
+		return -1;
 	}
+	else dealCommonVIndex(index);  //选中了普通顶点
+
+	return index;
+}
+
+void AntColonySystem::Ant::antRun()
+{
+	resetAnt();		//蚂蚁重置
+
+	int move_res;
+	while ((move_res = moveNext()) >= 0)
+	{
+		//累加路径权重
+		_path_weight += _ant_system._graph[_path[_path.size() - 2]][move_res]._adj_e_weight;
+	}
+
+	//将权重调整为每收集一个食物需要移动的距离
+	_path_weight = double(_path_weight) / double(_food_bag.size() + 1); 
+
+	if (move_res == -1) //蚂蚁死亡
+		_survive = false;
 	else
-		_ant_system.localUpdate(*this, index); //选中普通的顶点，则反馈蚁群系统
-
-	_path.push_back(index);
-	_forbiden_table.insert(index);
-	_loc = index;	//更新节点位置
+		_survive = true;
 }
 
 
-void AntColonySystem::updataPath(vector<VIndex> & path)
+bool AntColonySystem::isFood(VIndex index)
 {
-	Weight c_weight = 0;
-	for (int i = 1; i != path.size(); ++i)
+	return _food.find(index) != _food.end();
+}
+
+void AntColonySystem::updateBestAnt(Ant& ant)
+{	
+	if (cmpAnts(ant, *_best_ant)) //新蚂蚁更优秀
 	{
-		VIndex prev = path[i - 1];
-		VIndex curr = path[i];
-		c_weight += _graph[prev][curr]._adj_e_weight;
-	}
-	if (c_weight < _best_weight)
-	{
-		_best_weight = c_weight;
-		_best_path = path;
+		_best_ant->_path = ant._path;
+		_best_ant->_path_weight = ant._path_weight;
+		_best_ant->_survive = ant._survive;
 	}
 }
 
-void AntColonySystem::localUpdate(Ant & ant, AdjIndex index)  //根据蚂蚁所选择的新顶点，路径信息
+bool AntColonySystem::cmpAnts(const Ant& ant1, const Ant& ant2)
 {
-	AdjEdg & adj_edg = _graph[ant._loc][index]; 
 
-	//更新home权重
-	adj_edg._adj_e_home._info += adj_edg._adj_e_home._ainfo; 
-	
-	//根据蚂蚁是否拥有某种食物，更新食物信息量
-	unordered_map<FIndex, EInfo> & adj_ftable = adj_edg._adj_e_ftable;
-	for (unordered_map<FIndex, EInfo>::iterator it = adj_ftable.begin(); it != adj_ftable.end(); ++it)
+	if ((ant1._survive && ant2._survive) || ((!ant1._survive) && (!ant2._survive)))
+		//两只蚂蚁为同一种蚂蚁，则比较 power
 	{
-		if (ant._food_bag.find(it->first) == ant._food_bag.end())  //该蚂蚁没有收集到该食物
-		{
-			it->second._info += it->second._ainfo;  //增加该食物的信息量
-		}
+		return ant1._path_weight <= ant2._path_weight;
 	}
+	//两只蚂蚁种类不同时，终点蚂蚁更优秀
+	else if (ant1._survive)
+		return true;
+	else
+		return false;
 }
+
+//void AntColonySystem::localUpdate(Ant & ant, AdjIndex index)  //根据蚂蚁所选择的新顶点，路径信息
+//{
+//	AdjEdg & adj_edg = _graph[ant._loc][index]; 
+//
+//	// 如果背包满了,更新home权重
+//	if (ant._food_bag.size() == _food.size())
+//		adj_edg._adj_e_home.addInfo(); 
+//	else{
+//		//根据蚂蚁是否拥有某种食物，更新食物信息量
+//		unordered_map<FIndex, EInfo> & adj_ftable = adj_edg._adj_e_ftable;
+//		for (unordered_map<FIndex, EInfo>::iterator it = adj_ftable.begin(); it != adj_ftable.end(); ++it)
+//		{
+//			if (ant._food_bag.find(it->first) == ant._food_bag.end())  //该蚂蚁没有收集到该食物
+//			{
+//				it->second.addInfo();  //增加该食物的信息量
+//			}
+//		}
+//	}
+//}
 
