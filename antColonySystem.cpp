@@ -1,4 +1,5 @@
 #include "antColonySystem.h"
+#include <iostream>
 
 bool AntColonySystem::isFood(VIndex index)
 {
