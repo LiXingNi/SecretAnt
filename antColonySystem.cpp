@@ -1,3 +1,4 @@
+#include <iostream>
 #include "antColonySystem.h"
 
 bool AntColonySystem::isFood(VIndex index)
@@ -65,7 +66,7 @@ double AntColonySystem::calInfo(Ant & ant, AdjIndex adj_index)
 
 	Info food_info(0);
 	vector<EInfo> & food_table = adj_edge._adj_e_ftable;
-	uint64_t food_bag = ant._food_bag;
+	register uint64_t food_bag = ant._food_bag;
 
 	int loc = 0;
 	while (food_num--)
@@ -88,8 +89,8 @@ void AntColonySystem::run()
 	int count = 0;
 	for (int i(0); i != _steps_num; ++i)
 	{
-		if (i % 20 == 0)
-			cout << i << endl;
+		if (i % 100 == 0)
+			std::cout << i << std::endl;
 		for (auto & ant : _ants)
 			ant.antRun();
 		bool flag = count++ % 5 == 0 ? false : true;
