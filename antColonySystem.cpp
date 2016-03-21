@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-#include <iostream>
-=======
->>>>>>> refs/remotes/origin/master
 #include "antColonySystem.h"
 
 bool AntColonySystem::isFood(VIndex index)
@@ -11,7 +7,7 @@ bool AntColonySystem::isFood(VIndex index)
 
 void AntColonySystem::updateBestAnt(Ant& ant)
 {
-	if (cmpAnts(ant, *_best_ant)) //ĞÂÂìÒÏ¸üÓÅĞã
+	if (cmpAnts(ant, *_best_ant)) //æ–°èš‚èšæ›´ä¼˜ç§€
 	{
 		_best_ant->_path = ant._path;
 		_best_ant->_path_weight = ant._path_weight;
@@ -25,11 +21,11 @@ bool AntColonySystem::cmpAnts(const Ant& ant1, const Ant& ant2)
 {
 
 	if ((ant1._survive && ant2._survive) || ((!ant1._survive) && (!ant2._survive)))
-		//Á½Ö»ÂìÒÏÎªÍ¬Ò»ÖÖÂìÒÏ£¬Ôò±È½Ï power
+		//ä¸¤åªèš‚èšä¸ºåŒä¸€ç§èš‚èšï¼Œåˆ™æ¯”è¾ƒ power
 	{
 		return ant1._path_weight < ant2._path_weight;
 	}
-	//Á½Ö»ÂìÒÏÖÖÀà²»Í¬Ê±£¬ÖÕµãÂìÒÏ¸üÓÅĞã
+	//ä¸¤åªèš‚èšç§ç±»ä¸åŒæ—¶ï¼Œç»ˆç‚¹èš‚èšæ›´ä¼˜ç§€
 	else if (ant1._survive)
 		return true;
 	else
@@ -37,26 +33,26 @@ bool AntColonySystem::cmpAnts(const Ant& ant1, const Ant& ant2)
 }
 
 
-////******************´ıĞŞ¸Ä
+////******************å¾…ä¿®æ”¹
 //double AntColonySystem::calInfo(Ant& ant, AdjIndex adj_index)
 //{
 //	auto & _graph = getGraph();
-//	AdjEdg& adj_edge = _graph[ant._loc][adj_index];					//È¡³öÕâÌõ±ßµÄÒıÓÃ
-//	if (getFoodNum() == ant._food_num)								//Èç¹ûÊ³Îï°ü¹üµÄÊıÁ¿µÈÓÚÊ³ÎïÊıÁ¿£¬Ôò·µ»ØhomeĞÅÏ¢ËØ
+//	AdjEdg& adj_edge = _graph[ant._loc][adj_index];					//å–å‡ºè¿™æ¡è¾¹çš„å¼•ç”¨
+//	if (getFoodNum() == ant._food_num)								//å¦‚æœé£Ÿç‰©åŒ…è£¹çš„æ•°é‡ç­‰äºé£Ÿç‰©æ•°é‡ï¼Œåˆ™è¿”å›homeä¿¡æ¯ç´ 
 //		return adj_edge._adj_e_home._info;
 //
-//	Info food_info(0);														//³õÊ¼»¯Ê³ÎïĞÅÏ¢ËØ
+//	Info food_info(0);														//åˆå§‹åŒ–é£Ÿç‰©ä¿¡æ¯ç´ 
 //	vector<pair<VIndex,EInfo>> & food_table = adj_edge._adj_e_ftable;
 //	for (auto food_iter = food_table.begin(); food_iter != food_table.end(); ++ food_iter)
 //	{
-//		if (ant._food_bag[_food[food_iter->first]] == 0)	//Èç¹û±³°üÖĞ²»º¬ÓĞµ±Ç°±ßµÄÊ³ÎïĞÅÏ¢ËØx£¬ÔòÀÛ¼Ó¸ÃĞÅÏ¢ËØ
+//		if (ant._food_bag[_food[food_iter->first]] == 0)	//å¦‚æœèƒŒåŒ…ä¸­ä¸å«æœ‰å½“å‰è¾¹çš„é£Ÿç‰©ä¿¡æ¯ç´ xï¼Œåˆ™ç´¯åŠ è¯¥ä¿¡æ¯ç´ 
 //			food_info += food_iter->second._info;
 //	}
 //
 //
 //	food_info += (_food.size() - adj_edge._adj_e_ftable.size()) * _record_info;
 //
-//	return food_info;														//·µ»ØÊ³ÎïĞÅÏ¢ËØ  
+//	return food_info;														//è¿”å›é£Ÿç‰©ä¿¡æ¯ç´   
 //}
 
 double AntColonySystem::calInfo(Ant & ant, AdjIndex adj_index)
@@ -69,40 +65,30 @@ double AntColonySystem::calInfo(Ant & ant, AdjIndex adj_index)
 
 	Info food_info(0);
 	vector<EInfo> & food_table = adj_edge._adj_e_ftable;
-<<<<<<< HEAD
 	register uint64_t food_bag = ant._food_bag;
-=======
-	uint64_t food_bag = ant._food_bag;
->>>>>>> refs/remotes/origin/master
-
 	int loc = 0;
 	while (food_num--)
 	{
-		//È¡³ö×îµÍÎ»
-		if ((food_bag & 1) == 0)  //food_bagµ±Ç°Î»Îª0 ¡£Ôòµü¼Óµ±Ç°Ê³ÎïµÄĞÅÏ¢Á¿
+		//å–å‡ºæœ€ä½ä½
+		if ((food_bag & 1) == 0)  //food_bagå½“å‰ä½ä¸º0 ã€‚åˆ™è¿­åŠ å½“å‰é£Ÿç‰©çš„ä¿¡æ¯é‡
 			food_info += food_table[loc]._info;
 		++loc;
-		food_bag >>= 1;   //È¡³öÏÂÒ»Î»
+		food_bag >>= 1;   //å–å‡ºä¸‹ä¸€ä½
 	}
 	return food_info;
 }
 
 
-//Ã¿ËÄ´ÎÑ­»·Ñ¡Ôñ¾Ö²¿×î¼Ñ£¬Ò»´ÎÑ¡ÔñÈ«¾Ö×î¼Ñ
-//¾Ö²¿×î¼Ñ £º true
-//È«¾Ö×î¼Ñ £º false
+//æ¯å››æ¬¡å¾ªç¯é€‰æ‹©å±€éƒ¨æœ€ä½³ï¼Œä¸€æ¬¡é€‰æ‹©å…¨å±€æœ€ä½³
+//å±€éƒ¨æœ€ä½³ ï¼š true
+//å…¨å±€æœ€ä½³ ï¼š false
 void AntColonySystem::run()
 {
 	int count = 0;
 	for (int i(0); i != _steps_num; ++i)
 	{
-<<<<<<< HEAD
 		if (i % 100 == 0)
 			std::cout << i << std::endl;
-=======
-		if (i % 20 == 0)
-			cout << i << endl;
->>>>>>> refs/remotes/origin/master
 		for (auto & ant : _ants)
 			ant.antRun();
 		bool flag = count++ % 5 == 0 ? false : true;
@@ -117,8 +103,8 @@ void AntColonySystem::run()
 
 
 //* method:
-//* false->Ñ¡È¡È«¾Ö×îÓÅÂìÒÏ
-//* true->Ñ¡È¡µü´ú×îÓÅÂìÒÏ 
+//* false->é€‰å–å…¨å±€æœ€ä¼˜èš‚èš
+//* true->é€‰å–è¿­ä»£æœ€ä¼˜èš‚èš 
 Ant& AntColonySystem::chooseBestAnt(bool method) {
 	auto best_ant_iter = _ants.begin();
 	for (auto ant_iter = _ants.begin() + 1; ant_iter != _ants.end(); ++ant_iter)
@@ -142,16 +128,16 @@ void AntColonySystem::updateInfo(Ant& ant){
 
 	EInfo::updateMinMax(ant, _frate);///question
 
-	//Õı³£ÏûÉ¢²¿·Ö
+	//æ­£å¸¸æ¶ˆæ•£éƒ¨åˆ†
 	for (int src = 0; src != _adj_graph.size(); ++src)
 	{
 		vector<VIndex> & adj_index = _adj_graph[src];
 		for (auto & dst : adj_index)
 		{
-			//¸üĞÂÁÚ½Ó¶¥µã src->dst µÄ¼ÒÈ¨ÖØ
+			//æ›´æ–°é‚»æ¥é¡¶ç‚¹ src->dst çš„å®¶æƒé‡
 			_graph[src][dst]._adj_e_home.diss(_hrate);
 
-			//¸üĞÂÁÚ½Ó¶¥µã src->dst µÄÊ³Îï¶¥µã
+			//æ›´æ–°é‚»æ¥é¡¶ç‚¹ src->dst çš„é£Ÿç‰©é¡¶ç‚¹
 			auto & adj_food_table = _graph[src][dst]._adj_e_ftable;
 			for (auto & food_info: adj_food_table)
 			{
@@ -160,11 +146,11 @@ void AntColonySystem::updateInfo(Ant& ant){
 		}
 	}
 
-	//¸ù¾İ×î¼ÑÂìÒÏÏûÉ¢²¿·Ö
-	vector<int> food_vec;	//ĞèÒª¸üĞÂµÄÊ³Îï±í
+	//æ ¹æ®æœ€ä½³èš‚èšæ¶ˆæ•£éƒ¨åˆ†
+	vector<int> food_vec;	//éœ€è¦æ›´æ–°çš„é£Ÿç‰©è¡¨
 
 	bool update_home(false);
-	ant._survive ? update_home = true : 1;  //ÈôÂìÒÏÊÇ´æ»îµÄ£¬Ôò¸üĞÂHome ĞÅÏ¢ËØ
+	ant._survive ? update_home = true : 1;  //è‹¥èš‚èšæ˜¯å­˜æ´»çš„ï¼Œåˆ™æ›´æ–°Home ä¿¡æ¯ç´ 
 
 	auto path = ant._path;
 	double add_value = 1.0 / ant._path_weight;
@@ -174,12 +160,12 @@ void AntColonySystem::updateInfo(Ant& ant){
 		if (update_home)
 			_graph[path[i - 1]][path[i]]._adj_e_home.addInfo(add_value);
 
-		if (isFood(path[i]))  //Èôµ±Ç°¶¥µãÊÇÊ³Îï¶¥µã£¬Ôò½«Æä¼ÓÈëĞèÒª¸üĞÂµÄÊ³Îï±í
+		if (isFood(path[i]))  //è‹¥å½“å‰é¡¶ç‚¹æ˜¯é£Ÿç‰©é¡¶ç‚¹ï¼Œåˆ™å°†å…¶åŠ å…¥éœ€è¦æ›´æ–°çš„é£Ÿç‰©è¡¨
 			food_vec.push_back(path[i]);
 
 		auto & ftable = _graph[path[i - 1]][path[i]]._adj_e_ftable;
 
-		for (auto food_index : food_vec)  //±éÀúĞèÒª¸üĞÂµÄÊ³Îï±í²¢¸üĞÂĞÅÏ¢ËØ
+		for (auto food_index : food_vec)  //éå†éœ€è¦æ›´æ–°çš„é£Ÿç‰©è¡¨å¹¶æ›´æ–°ä¿¡æ¯ç´ 
 		{
 			ftable[food_index].addInfo(add_value);
 		}
@@ -190,8 +176,4 @@ void AntColonySystem::updateInfo(Ant& ant){
 void EInfo::updateMinMax(Ant& best_ant, double rate){
 	Qmax = 1.0 / (best_ant._path_weight *(1 - rate));
 	Qmin = Qmax * ratio;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> refs/remotes/origin/master
