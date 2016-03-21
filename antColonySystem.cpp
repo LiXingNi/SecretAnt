@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 #include <iostream>
+=======
+>>>>>>> refs/remotes/origin/master
 #include "antColonySystem.h"
 
 bool AntColonySystem::isFood(VIndex index)
@@ -66,7 +69,11 @@ double AntColonySystem::calInfo(Ant & ant, AdjIndex adj_index)
 
 	Info food_info(0);
 	vector<EInfo> & food_table = adj_edge._adj_e_ftable;
+<<<<<<< HEAD
 	register uint64_t food_bag = ant._food_bag;
+=======
+	uint64_t food_bag = ant._food_bag;
+>>>>>>> refs/remotes/origin/master
 
 	int loc = 0;
 	while (food_num--)
@@ -89,8 +96,13 @@ void AntColonySystem::run()
 	int count = 0;
 	for (int i(0); i != _steps_num; ++i)
 	{
+<<<<<<< HEAD
 		if (i % 100 == 0)
 			std::cout << i << std::endl;
+=======
+		if (i % 20 == 0)
+			cout << i << endl;
+>>>>>>> refs/remotes/origin/master
 		for (auto & ant : _ants)
 			ant.antRun();
 		bool flag = count++ % 5 == 0 ? false : true;
@@ -178,4 +190,8 @@ void AntColonySystem::updateInfo(Ant& ant){
 void EInfo::updateMinMax(Ant& best_ant, double rate){
 	Qmax = 1.0 / (best_ant._path_weight *(1 - rate));
 	Qmin = Qmax * ratio;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> refs/remotes/origin/master
